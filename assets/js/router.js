@@ -163,7 +163,7 @@
 })();
 (() => {
   "use strict";
-  const version = "20261027-aipri-local-unlimited-qr-v2";
+  const version = "20261029-invitation-v1";
   const requested = new URLSearchParams(location.search).get("view");
   const page = ["shared", "browse", "contact", "card-registration"].includes(
     requested,
@@ -209,6 +209,10 @@
             sessionStorage.getItem("card-active-theme") === "aipri"),
       );
     } catch {}
+  }
+  if (page === "contact") {
+    const theme = new URLSearchParams(location.search).get("theme") || (() => { try { return sessionStorage.getItem("card-active-theme"); } catch { return ""; } })();
+    document.documentElement.classList.toggle("contact-primagi", theme === "primagi");
   }
   const initialVisibility = document.body.style.visibility;
   document.body.style.visibility = "hidden";
@@ -260,7 +264,7 @@
           "verse-search-hint",
         ]
       : [page === "browse" ? "shared" : page]
-    ).map(stylesheet),
+    ).concat("primagi").map(stylesheet),
   );
   styles.then(
     () => {
@@ -287,6 +291,8 @@
           })
       : Promise.resolve();
   Promise.all([styles, dependencies, preview])
+    .then(() => script("primagi.js"))
+    .then(() => script("verse-catalog-cache.js"))
     .then(() => script("site-common.js"))
     .then(() => { window.CARD_SITE_COMMON.init(page); window.CARD_SHARED_PAGE_READY=page; })
     .then(() => (page === "album" ? script("private-qr.js") : undefined))
@@ -315,4 +321,5 @@
       status.textContent = window.CARD_ERROR.message(error);
       document.body.prepend(status);
     });
+
 })();

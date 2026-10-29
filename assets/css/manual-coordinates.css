@@ -1,0 +1,43 @@
+/* Personal, browser-local costume collection */
+.manual-coordinate-launcher{position:fixed;right:16px;bottom:16px;z-index:2500;border:1px solid #d98caf;border-radius:999px;background:#fff7fb;color:#6e3653;font-family:inherit;font-size:14px;font-weight:600;line-height:1.2;padding:12px 16px;box-shadow:0 4px 18px #59334a2b;cursor:pointer}
+.manual-coordinate-dialog{width:min(720px,calc(100% - 24px));max-height:min(86dvh,900px);overflow:auto;border:1px solid #e7c9d8;border-radius:18px;padding:18px;background:#fffafd;color:#3d3038;box-shadow:0 18px 70px #27121e44}
+.manual-coordinate-dialog::backdrop{background:#21131c88;backdrop-filter:blur(2px)}
+.manual-coordinate-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.manual-coordinate-heading h2{font-size:1.2rem;margin:0}
+.manual-coordinate-heading button{border:0;background:transparent;font-size:26px;padding:2px 8px;cursor:pointer}
+.manual-coordinate-note{font-size:.9rem;color:#75646e;line-height:1.6}
+.manual-coordinate-actions,.manual-coordinate-item-actions,.manual-coordinate-form-actions,.manual-coordinate-qr-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.manual-coordinate-dialog button{border:1px solid #dfc6d3;border-radius:10px;padding:8px 11px;background:#fff;color:#57384a;cursor:pointer;font:inherit;font-size:.9rem}
+.manual-coordinate-dialog button:hover{background:#fff0f7}
+.manual-coordinate-dialog [data-status]{min-height:1.3em;color:#6d4960;font-size:.9rem}
+.manual-coordinate-list{display:grid;gap:10px;margin-top:12px}
+.manual-coordinate-item{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;border:1px solid #ead9e2;border-radius:14px;padding:10px;background:#fff}
+.manual-coordinate-item>img{width:100px;height:112px;object-fit:contain;background:#fcf8fa;border-radius:8px}
+.manual-coordinate-item-info{min-width:0;display:flex;flex-direction:column;gap:5px}
+.manual-coordinate-item-info p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem;color:#675862}
+.manual-coordinate-item-info small{color:#826c79}
+.manual-coordinate-item-actions{grid-column:1/-1}
+.manual-coordinate-empty{padding:18px;text-align:center;color:#887482}
+.manual-coordinate-dialog [data-form]{border-top:1px solid #ead9e2;margin-top:18px;padding-top:16px}
+.manual-coordinate-dialog [data-form] h3{margin:0 0 12px}
+.manual-coordinate-dialog [data-form]>label{display:grid;gap:6px;margin:12px 0;font-size:.92rem}
+.manual-coordinate-dialog input:not([type=file]),.manual-coordinate-dialog textarea{width:100%;box-sizing:border-box;border:1px solid #ddc8d4;border-radius:9px;padding:10px;background:white;color:inherit;font:inherit}
+.manual-coordinate-dialog input[type=file]{max-width:100%}
+.manual-coordinate-dialog textarea{resize:vertical}
+.manual-coordinate-preview img{display:block;max-width:100%;max-height:280px;object-fit:contain;border-radius:10px;background:#f8f1f5}
+.manual-coordinate-qr-row{margin:12px 0}
+.manual-coordinate-qr-row span{font-size:.88rem;color:#75646e}
+.manual-coordinate-form-actions{justify-content:flex-end;margin-top:16px}
+.manual-coordinate-form-actions [data-save]{background:#a94c7a;color:#fff;border-color:#a94c7a}
+.manual-coordinate-camera{position:relative;overflow:hidden;border-radius:14px;background:#211b20;aspect-ratio:4/3;max-height:55vh}
+.manual-coordinate-camera video{width:100%;height:100%;object-fit:cover}
+.manual-coordinate-camera span{position:absolute;inset:20%;border:2px solid #fff;border-radius:12px;box-shadow:0 0 0 100vmax #0003}
+.manual-coordinate-generated-qr{display:grid;place-items:center;padding:20px}
+.manual-coordinate-generated-qr svg{width:min(100%,360px);height:auto}
+@media(max-width:520px){.manual-coordinate-launcher{right:10px;bottom:10px;padding:10px 12px;font-size:13px}.manual-coordinate-dialog{padding:14px;border-radius:15px}.manual-coordinate-item{grid-template-columns:76px minmax(0,1fr);gap:9px}.manual-coordinate-item>img{width:76px;height:90px}.manual-coordinate-item-actions button{font-size:.82rem;padding:7px 8px}}
+
+/* The visible selector now has two titles: Aipri and Primagi. */
+.game-switch{min-width:216px!important}
+.game-switch .game-switch-slider{width:calc(50% - 4px)!important}
+.game-switch.is-aipri .game-switch-slider{transform:translateX(0)!important}
+.game-switch.is-primagi .game-switch-slider{transform:translateX(100%)!important}

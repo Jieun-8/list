@@ -44,11 +44,11 @@
         (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
       );
   const labels = {
-    aikatsu: "アイカツアンコール",
     onegai: "おねがいアイプリ",
     himitsu: "ひみつのアイプリ",
     "verse-onegai": "おねがいアイプリバース",
     "verse-himitsu": "ひみつのアイプリバース",
+    "verse-primagi": "ワッチャプリマジ！",
   };
   const values = (v) => (Array.isArray(v) ? v : v ? [v] : []),
     normal = (s) =>
@@ -57,7 +57,7 @@
         .toLowerCase()
         .replace(/[\s‐‑–—−_-]/g, "");
   const browseOnly = new URLSearchParams(location.search).get("view") === "browse";
-  const browseScopes = ["aikatsu", "onegai", "himitsu", "verse-onegai", "verse-himitsu"];
+  const browseScopes = ["onegai", "himitsu", "verse-onegai", "verse-himitsu", "verse-primagi"];
   const token = browseOnly ? "" : location.hash.slice(1);
   let verseCatalog = null,
     publicCatalog = null,
@@ -146,6 +146,7 @@
         ? "partial"
         : "no";
   }
+  const chapterLabel = value => scope === "verse-primagi" ? window.CARD_PRIMAGI.chapterLabel(value) : value;
   function series(c) {
     const labels = verse()
       ? [...new Set((c.appearances || []).map((a) => a.series))]
@@ -169,25 +170,15 @@
   function fields() {
     return verse()
       ? [
-          ["series", "だん数"],
-          ["group", "ガチャ・キャンペーン"],
+          ["series", scope === "verse-primagi" ? "章" : "だん数"],
+          ["group", scope === "verse-primagi" ? "入手方法" : "ガチャ・キャンペーン"],
         ]
-      : scope === "aikatsu"
-        ? [
-            ["series", "弾数"],
-            ["type", "タイプ"],
-            ["rarity", "レアリティ"],
-            ["category", "カテゴリ"],
-            ["brand", "ブランド"],
-            ["character", "キャラクター"],
-            ["variant", "カードの種類"],
-          ]
-        : [
-            ["series", "弾数"],
-            ["character", "キャラクター"],
-            ["rarity", "レアリティ"],
-            ["songs", "遊べる曲"],
-          ];
+      : [
+          ["series", "弾数"],
+          ["character", "キャラクター"],
+          ["rarity", "レアリティ"],
+          ["songs", "遊べる曲"],
+        ];
   }
 function songFilterValue(value) {
   let song = String(value || "").trim();
@@ -215,7 +206,7 @@ function songFilterValue(value) {
       (c) =>
         (!q ||
           normal(
-            [c.code, c.name, c.character, ...values(c.songs), ...groups(c)].join(" "),
+            [c.code, c.name, c.character, ...(c.part_ids || []).map(id => parts.get(id)?.metadata?.name || ""), ...values(c.songs), ...groups(c)].join(" "),
           ).includes(q)) &&
         Object.entries(filters).every(
           ([key, value]) => !value || fieldValues(c, key).includes(value),
@@ -234,19 +225,20 @@ function songFilterValue(value) {
         const options = [...new Set(rows.flatMap((c) => fieldValues(c, key)).filter(Boolean))].sort(
           (a, b) =>
             key === "series"
-              ? String(b).localeCompare(String(a), "ja", { numeric: true })
+              ? scope === "verse-primagi" ? window.CARD_PRIMAGI.chapterRank(b)-window.CARD_PRIMAGI.chapterRank(a) || String(b).localeCompare(String(a),"ja",{numeric:true}) : String(b).localeCompare(String(a), "ja", { numeric: true })
               : String(a).localeCompare(String(b), "ja", { numeric: true }),
         );
         if (filters[key] && !options.includes(filters[key])) options.unshift(filters[key]);
-        return `<label>${esc(label)}<select data-public-filter="${key}"><option value="">すべて</option>${options.map((v) => `<option value="${esc(v)}" ${v === filters[key] ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>`;
+        return `<label>${esc(label)}<select data-public-filter="${key}"><option value="">すべて</option>${options.map((v) => `<option value="${esc(v)}" ${v === filters[key] ? "selected" : ""}>${esc(chapterLabel(v))}</option>`).join("")}</select></label>`;
       })
       .join("");
   }
   function image(c, large = false) {
-    const url = verse() ? c.image || c.thumbnail : side && large ? c.back : c.front;
+    const url = verse() ? window.CARD_PRIMAGI.verseImage(c.image) || window.CARD_PRIMAGI.verseImage(c.thumbnail) : side && large ? c.back : c.front;
     if (url)
-      return `<img src="${esc(url)}" alt="${esc(c.name || c.code)}" loading="${large ? "eager" : "lazy"}" decoding="async">`;
-    return `<span class="public-collage">${(c.part_ids || []).map((id) => `<img src="${esc(parts.get(id)?.image || "")}" alt="" loading="lazy">`).join("")}</span>`;
+      return `<img src="${esc(window.CARD_PRIMAGI.image(url, large ? 900 : 420))}" alt="${esc(c.name || c.code)}" loading="${large ? "eager" : "lazy"}" decoding="async">`;
+    const images=(c.part_ids||[]).map(id=>window.CARD_PRIMAGI.verseImage(parts.get(id)?.image)).filter(Boolean);
+    return images.length?`<span class="public-collage">${images.map(url=>`<img src="${esc(url)}" alt="" loading="lazy">`).join("")}</span>`:`<span class="catalog-image-unavailable">画像なし</span>`;
   }
   function renderScopeNote() {
     if (browseOnly) return;
@@ -256,7 +248,7 @@ function songFilterValue(value) {
     const selected = snapshot?.series_filter;
     note.hidden = !Array.isArray(selected);
     if (note.hidden) return;
-    const labels = [...new Set(selected.map((value) => String(value).replaceAll("弾", "だん")))];
+    const labels = [...new Set(selected.map((value) => chapterLabel(String(value)).replaceAll("弾", "だん")))];
     const caption = document.createElement("span");
     caption.className = "public-scope-caption";
     caption.textContent = "公開範囲";
@@ -276,7 +268,7 @@ function songFilterValue(value) {
     list.className = "public-scope-list";
     for (const label of labels) {
       const item = document.createElement("span");
-      item.textContent = label;
+      item.textContent = chapterLabel(label);
       list.append(item);
     }
     details.append(summary, list);
@@ -302,7 +294,8 @@ function songFilterValue(value) {
     $("public-filtered-rate").innerHTML =
       `<span>絞り込み内の取得率</span><strong>${(subset.length ? (subsetGot / subset.length) * 100 : 0).toFixed(1)}%</strong><small>取得済 ${subsetGot}${unit} ／ 未取得 ${subset.length - subsetGot}${unit}</small>`;
     $("public-filter-label").textContent = verse() ? "コーデを絞り込む" : "カードを絞り込む";
-    document.body.classList.toggle("game-aipri", scope !== "aikatsu");
+    document.body.classList.toggle("game-aipri", scope !== "verse-primagi");
+    document.body.classList.toggle("game-primagi", scope === "verse-primagi");
     $("public-rate").textContent = (count ? (got / count) * 100 : 0).toFixed(1) + "%";
     $("public-progress-bar").style.width = (count ? (got / count) * 100 : 0) + "%";
     $("public-layout-label").textContent = verse() ? "コーデの並び" : "カードの並び";
@@ -347,7 +340,7 @@ function songFilterValue(value) {
         .filter(([, v]) => v)
         .map(
           ([key, value]) =>
-            `<button class="filter-chip" type="button" data-public-clear="${esc(key)}">${esc(fields().find(([k]) => k === key)?.[1] || key)}：${esc(value)}<span aria-hidden="true">×</span></button>`,
+            `<button class="filter-chip" type="button" data-public-clear="${esc(key)}">${esc(fields().find(([k]) => k === key)?.[1] || key)}：${esc(chapterLabel(value))}<span aria-hidden="true">×</span></button>`,
         )
         .join("") +
       ($("public-query").value.trim()
@@ -402,8 +395,8 @@ function songFilterValue(value) {
     const rows = verse()
       ? [
           ["シリーズ", labels[scope]],
-          ["だん数", series(c).join(" ／ ")],
-          ["ガチャ・キャンペーン", groups(c).join(" ／ ")],
+          [scope === "verse-primagi" ? "章" : "だん数", series(c).join(" ／ ")],
+          [scope === "verse-primagi" ? "入手方法" : "ガチャ・キャンペーン", groups(c).join(" ／ ")],
         ]
       : [
           ["キャラクター", c.character],
@@ -417,13 +410,13 @@ function songFilterValue(value) {
     $("public-detail-content").innerHTML =
       `<div class="public-modal-layout"><div><div class="public-modal-image">${image(c, true)}</div>${!verse() ? `<div class="public-side-switch" role="group" aria-label="表面・裏面"><button type="button" data-public-side="0" aria-pressed="${!side}">表面</button><button type="button" data-public-side="1" aria-pressed="${!!side}" ${!c.back ? "disabled" : ""}>裏面</button></div>` : ""}</div><div><span class="public-code">${esc(c.code || "コード記載なし")}</span><h2>${esc(c.name || "カード名未取得")}</h2>${browseOnly ? "" : `<p class="public-possession is-${verse() ? (ownsFull(c) ? "yes" : "no") : state(c)}">${verse() ? (ownsFull(c) ? "フルコーデ持ってる" : "フルコーデ未所持") : held ? "持っている" : "持っていない"}</p>`}<dl>${rows
         .filter(([, v]) => v)
-        .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
+        .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(chapterLabel(v))}</dd>`)
         .join("")}</dl></div></div>${
         verse()
           ? `<h3>${browseOnly ? "構成パーツ" : "パーツごとの所持状況"}</h3><div class="public-modal-parts">${c.part_ids
               .map((id) => {
                 const p = parts.get(id);
-                return `<article><img src="${esc(p?.image || "")}" alt="${esc(p?.slot)}"><span>${esc(p?.slot)} ／ ${p?.buzz == null ? "BP未確認" : p.buzz + " BP"}</span>${browseOnly ? "" : `<small class="public-part-state ${(quantities.get(id) || 0) > 0 ? "is-yes" : "is-no"}">${(quantities.get(id) || 0) > 0 ? "持っている " + quantities.get(id) + "枚" : "持っていない"}</small>`}</article>`;
+                return `<article>${window.CARD_PRIMAGI.verseImage(p?.image) ? `<img src="${esc(window.CARD_PRIMAGI.verseImage(p?.image))}" alt="${esc(p?.slot)}">` : `<span class="catalog-image-unavailable">画像なし</span>`}<span>${esc(p?.slot)}${scope === "verse-primagi" ? " · " + esc(p?.metadata?.name || "未取得") : ""} ／ ${p?.buzz == null ? (scope === "verse-primagi" ? "ワッチャ未取得" : "BP未取得") : `${p.buzz} ${scope === "verse-primagi" ? "ワッチャ" : "バズパワー"}`}</span>${browseOnly ? "" : `<small class="public-part-state ${(quantities.get(id) || 0) > 0 ? "is-yes" : "is-no"}">${(quantities.get(id) || 0) > 0 ? "持っている " + quantities.get(id) + "枚" : "持っていない"}</small>`}</article>`;
               })
               .join("")}</div>`
           : ""
@@ -436,7 +429,7 @@ function songFilterValue(value) {
     const scroll = { x: window.scrollX, y: window.scrollY };
     const dialog = $("public-detail"), content = $("public-detail-content");
     const ds = dialog.scrollTop, cs = content.scrollTop, selectedId = selected?.id;
-    items = publicCatalog.cards.filter(c => scope === "aikatsu" ? c.game === "aikatsu" : c.game === "aipri" && [scope, scope === "onegai" ? "おねがい" : "ひみつ"].includes(c.family));
+    items = publicCatalog.cards.filter(c => c.game === "aipri" && [scope, scope === "onegai" ? "おねがい" : "ひみつ"].includes(c.family));
     if (Array.isArray(snapshot?.visible_ids)) { const visible = new Set(snapshot.visible_ids); items = items.filter(c => visible.has(c.id)); }
     fillFields(); render(); fillBanner();
     if (selectedId && dialog.open) {
@@ -460,7 +453,7 @@ function songFilterValue(value) {
     }
     try {
       const r = browseOnly
-        ? { data: { available: true, scope: browseScopes.includes(wanted) ? wanted : "aikatsu", scopes: browseScopes } }
+        ? { data: { available: true, scope: browseScopes.includes(wanted) ? wanted : "onegai", scopes: browseScopes } }
         : await client.rpc("card_album_share_read", {
             p_token: token,
             p_scope: wanted || null,
@@ -499,11 +492,13 @@ function songFilterValue(value) {
         partMap = new Map();
       if (snap.scope.startsWith("verse-")) {
         const c =
-          verseCatalog || (await client.rpc("card_verse_catalog_cached", { p_version: null }));
+          window.CARD_VERSE_CATALOG
+            ? {data:await window.CARD_VERSE_CATALOG.load(client),error:null}
+            : verseCatalog || (await client.rpc("card_verse_catalog_cached", { p_version: null }));
         if (c.error || !Array.isArray(c.data?.coordinates) || !Array.isArray(c.data?.parts))
           throw Error("コーデ情報を取得できませんでした。");
         verseCatalog = c;
-        const family = snap.scope === "verse-onegai" ? "onegai" : "himitsu";
+        const family = snap.scope.slice(6);
         rows = c.data.coordinates.filter((x) => x.family === family);
         partMap = new Map(c.data.parts.filter((p) => p.family === family).map((p) => [p.id, p]));
       } else {
@@ -513,10 +508,8 @@ function songFilterValue(value) {
         rows = catalog.cards
           .map((c) => ({ ...c, ...(patches.get(c.id) || {}) }))
           .filter((c) =>
-            snap.scope === "aikatsu"
-              ? c.game === "aikatsu"
-              : c.game === "aipri" &&
-                [snap.scope, snap.scope === "onegai" ? "おねがい" : "ひみつ"].includes(c.family),
+            c.game === "aipri" &&
+            [snap.scope, snap.scope === "onegai" ? "おねがい" : "ひみつ"].includes(c.family),
           );
       }
       if (Array.isArray(snap.visible_ids)) {
@@ -537,7 +530,9 @@ function songFilterValue(value) {
         filters = scopeFilters.get(scope) || {};
         if (!scopeFilters.has(scope)) {
           const rank = (t) => {
-            const x = String(t).normalize("NFKC"),
+            const x = String(t).normalize("NFKC");
+            if (scope === "verse-primagi") return window.CARD_PRIMAGI.chapterRank(x);
+            const
               n = x.match(/(\d+)\s*(?:だん|弾)/);
             return n ? (x.includes("リング") ? 1000000 : 0) + Number(n[1]) : -1;
           };
@@ -731,17 +726,12 @@ function songFilterValue(value) {
       publicCatalog = catalog;
       const candidates = catalog.cards.filter((c) => {
         try {
-          return !!c.front && ["aipri.jp", "dcd.aikatsu.com"].includes(new URL(c.front).hostname);
+          return !!c.front && ["aipri.jp"].includes(new URL(c.front).hostname);
         } catch {
           return false;
         }
       });
-      const a = shuffle(candidates.filter((c) => c.game === "aikatsu")),
-        b = shuffle(candidates.filter((c) => c.game === "aipri"));
-      const count = Math.min(7, a.length, b.length);
-      const cards = count
-        ? shuffle([...a.slice(0, count), ...b.slice(0, count)])
-        : shuffle([...a, ...b]).slice(0, 14);
+      const cards = shuffle(candidates.filter((c) => c.game === "aipri")).slice(0, 14);
       if (!cards.length) return;
       const sequence = cards
         .map(
@@ -759,7 +749,9 @@ function songFilterValue(value) {
   function renderProgressDetails() {
     if (!$("public-progress-details").open) return;
     const rank = (t) => {
-      const x = String(t).normalize("NFKC"),
+      const x = String(t).normalize("NFKC");
+            if (scope === "verse-primagi") return window.CARD_PRIMAGI.chapterRank(x);
+            const
         n = x.match(/(\d+)\s*(?:だん|弾)/);
       return n ? (x.includes("リング") ? 1000000 : 0) + Number(n[1]) : -1;
     };
@@ -774,7 +766,7 @@ function songFilterValue(value) {
           got = rows.filter(full).length,
           rate = rows.length ? (got / rows.length) * 100 : 0,
           unit = verse() ? "コーデ" : "枚";
-        return `<div class="public-series-rate"><div><span>${esc(label)}</span><strong>${rate.toFixed(1)}%</strong></div><div class="public-progress-track"><span style="width:${rate}%"></span></div><p>取得済 ${got}${unit} ／ 未取得 ${rows.length - got}${unit}</p></div>`;
+        return `<div class="public-series-rate"><div><span>${esc(chapterLabel(label))}</span><strong>${rate.toFixed(1)}%</strong></div><div class="public-progress-track"><span style="width:${rate}%"></span></div><p>取得済 ${got}${unit} ／ 未取得 ${rows.length - got}${unit}</p></div>`;
       })
       .join("");
   }
@@ -1312,7 +1304,7 @@ function songFilterValue(value) {
     },
     about: {
       title: "このサイトについて",
-      body: `<p>カードアルバムは、アイプリ・アイプリバースのコレクションを記録する非公式サイトです。</p>
+      body: `<p>カードアルバムは、アイプリ・アイプリバース・ワッチャプリマジ！のコレクションを記録・共有する非公式サイトです。</p>
       <h3>この画面について</h3><p>持ち主が公開したコレクションを閲覧するための専用画面です。カードやコーデを検索し、画像・所持数・取得率を確認できます。記録の追加や変更はできません。</p>
       <h3>公式サービスとの関係</h3><p>本サイトは作品・ゲームの公式運営とは関係ありません。作品名、カード画像などの権利は各権利者に帰属します。ゲームの仕様や最新情報は公式サイトをご確認ください。</p>
       <h3>自分のアルバムを作るには</h3><p>画面下部の「アルバムを作成する」から通常サイトへ進めます。共有アルバムを閲覧するだけなら、登録は不要です。</p>`,

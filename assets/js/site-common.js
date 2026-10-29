@@ -35,7 +35,7 @@
           },
           about: {
             title: "このサイトについて",
-            body: `<p>カードアルバムは、アイプリ・アイプリバースのカードを探して、集めたカードを記録するための非公式サイトです。</p>
+            body: `<p>カードアルバムは、アイプリ・アイプリバース・ワッチャプリマジ！のカードやコーデを探して、集めた記録を管理するための非公式サイトです。</p>
       <h3>できること</h3><ul><li>作品や種類ごとのカード検索・絞り込み</li><li>表面・裏面の閲覧</li><li>所持カードの登録と取得率の確認</li></ul>
       <h3>公式サービスとの関係</h3><p>本サイトは作品・ゲームの公式運営とは関係ありません。作品名、カード画像などの権利は各権利者に帰属します。掲載内容について公式運営へお問い合わせいただくことはお控えください。</p>
       <h3>情報の更新</h3><p>カード情報は定期的に更新します。未掲載・誤記・反映の遅れがある場合は、公式情報もあわせてご確認ください。</p>
@@ -62,39 +62,36 @@
           "use strict";
           const nativeFetch = window.fetch.bind(window);
           let pending = null;
+  let freshUntil=0,retryAt=0,failures=0,lastError;
           let state = { maintenance: false };
           let notify = () => {};
-          async function check() {
-            if (pending) return pending;
-            pending = (async () => {
-              const config = window.APP_CONFIG;
-              const response = await nativeFetch(
-                config.supabaseUrl + "/rest/v1/rpc/card_album_site_status",
-                {
-                  method: "POST",
-                  headers: {
-                    apikey: config.supabaseKey,
-                    "Content-Type": "application/json",
-                  },
-                  body: "{}",
-                  cache: "no-store",
-                },
-              );
-              if (!response.ok)
-                throw new Error(
-                  "メンテナンス設定を確認できません。ページを再読み込みしてください。",
-                );
-              state = await response.json();
-              if (!state || typeof state.maintenance !== "boolean")
-                throw new Error("メンテナンス設定を確認できません。");
-              notify(state);
-              return state;
-            })().finally(() => {
-              pending = null;
-            });
-            return pending;
-          }
-          async function guardedFetch(input, options) {
+          async function check({force=false}={}) {
+  if (pending) return pending;
+  if (Date.now()<retryAt) throw lastError;
+  if (!force && Date.now()<freshUntil) return state;
+  pending=(async()=>{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),10000);
+    try {
+      const config=window.APP_CONFIG;
+      const response=await nativeFetch(config.supabaseUrl+"/rest/v1/rpc/card_album_site_status",{
+        method:"POST",headers:{apikey:config.supabaseKey,"Content-Type":"application/json"},
+        body:"{}",cache:"no-store",signal:controller.signal
+      });
+      if(!response.ok)throw Error("接続が混み合っています。時間をおいて再度お試しください。");
+      const data=await response.json();
+      if(!data||typeof data.maintenance!=="boolean")throw Error("メンテナンス設定を確認できません。");
+      state=data;freshUntil=Date.now()+30000*(1+Math.random()*.2);failures=0;retryAt=0;
+      notify(state);return state;
+    } finally {clearTimeout(timeout);}
+  })().catch(error=>{
+    lastError=error;failures=Math.min(failures+1,6);
+    retryAt=Date.now()+Math.min(300000,15000*2**(failures-1))*(1+Math.random()*.2);
+    throw error;
+  }).finally(()=>{pending=null});
+  return pending;
+}
+  async function guardedFetch(input, options) {
             const url =
               typeof input === "string" ? input : input.url || String(input);
             if (!url.startsWith(window.APP_CONFIG.supabaseUrl + "/"))
@@ -124,7 +121,7 @@
                 text.includes("CARD_ALBUM_MAINTENANCE") ||
                 text.includes("user_banned")
               )
-                await check();
+                await check({force:true});
             }
             return response;
           }

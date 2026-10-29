@@ -31,9 +31,7 @@
         typeof row.target_id === "string" &&
         typeof row.payload === "string"
       ) : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   }
   function persistRows(value) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
@@ -42,14 +40,9 @@
     const all = storedRows().filter((row) =>
       !(row.kind === t.kind && row.target_id === String(t.id))
     );
-    all.push({
-      kind: t.kind,
-      target_id: String(t.id),
-      payload,
-      name: String(t.name || t.id),
-      series: t.series || "",
-      updated_at: new Date().toISOString()
-    });
+    all.push({ kind:t.kind, target_id:String(t.id), payload,
+      name:String(t.name || t.id), series:t.series || "",
+      updated_at:new Date().toISOString() });
     persistRows(all);
   }
   function deleteLocal(kind, targetId) {
@@ -144,7 +137,7 @@
     return /上限/.test(e?.message || "")
       ? "QRコードの登録上限に達しました。不要なQRコードを削除してください。"
       : /ログイン/.test(e?.message || "")
-        ? "QRコードの操作を完了できませんでした。"
+        ? "ログインしてからお試しください。"
         : "QRコードの操作を完了できませんでした。通信状態を確認してお試しください。";
   }
   function show(t) {
@@ -225,7 +218,7 @@
   async function scan(t, onRead) {
     const u = uid(), token = ++scanToken;
     if (!u || !dialog.open) return;
-    // ローカル保存のため、サーバー側の50件上限チェックは行わない。
+    // ローカル保存のため、サーバー側の登録上限チェックは行わない。
     if (!navigator.mediaDevices?.getUserMedia) {
       message(
         "カメラを使用できません。HTTPSで開き、カメラに対応したブラウザでお試しください。",
@@ -276,8 +269,8 @@
               if (uid() === u) dialog.close();
               return;
             }
-            saveLocal(t, result.data);
             if (uid() !== u) return;
+            saveLocal(t, result.data);
             rows.set(key(t), result.data);
             sync();
             document.dispatchEvent(new Event("private-qr-changed"));
@@ -400,7 +393,7 @@
   manager.className = "qr-manager-dialog";
   manager.setAttribute("aria-labelledby", "qr-manager-title");
   manager.innerHTML =
-    '<div class="qr-manager-heading"><h2 id="qr-manager-title">登録済みQRコード</h2><button type="button" data-close aria-label="閉じる">×</button></div><div class="qr-manager-filters" role="group" aria-label="タグで絞り込み"></div><p data-status role="status" aria-live="polite"></p><div data-entries></div><div class="qr-manager-footer"><button type="button" data-delete-all disabled>QRコードを一括削除</button><p>このブラウザに保存したカード・コーデ・パーツのQRコードを削除します。</p><p>登録数の固定上限はありません。保存できる量はブラウザの空き容量に依存します。</p></div>';
+    '<div class="qr-manager-heading"><h2 id="qr-manager-title">登録済みQRコード</h2><button type="button" data-close aria-label="閉じる">×</button></div><div class="qr-manager-filters" role="group" aria-label="タグで絞り込み"></div><p data-status role="status" aria-live="polite"></p><div data-entries></div><div class="qr-manager-footer"><button type="button" data-export-local>QR情報をバックアップ</button><button type="button" data-import-local>バックアップを復元</button><input type="file" data-import-local-file accept="application/json,.json" hidden><button type="button" data-delete-all disabled>この端末のQRを一括削除</button><p>QR情報はこのブラウザに保存されます。機種変更やサイトデータ削除の前にバックアップしてください。</p></div>';
   document.body.append(manager);
   manager.querySelector("[data-close]").onclick = () => manager.close();
   const confirmation = document.createElement("dialog");
@@ -432,14 +425,18 @@
   }
   const managerStatus = manager.querySelector("[data-status]");
   async function removeManaged(row) {
-    if (managing) return false;
-    if (!(await confirmRemoval(row.name))) return false;
+    const user = uid();
+    if (!user || user !== managerOwner || managing) return false;
+    if (!(await confirmRemoval(row.name)) || uid() !== user) return false;
     managing = true;
     try {
-      deleteLocal(row.kind, row.target_id);
-      rows.delete(row.kind + ":" + row.target_id);
-      sync();
-      document.dispatchEvent(new Event("private-qr-changed"));
+      if (row.kind === "save") {
+        const result = await db().rpc("card_save_code_delete", { p_id: row.target_id });
+        if (result.error) throw result.error;
+      } else {
+        deleteLocal(row.kind, row.target_id);
+      }
+      if (uid() !== user) return false;
       await load();
       await reloadManager();
       return true;
@@ -452,9 +449,7 @@
     if (row.kind === "save")
       return row.series === "friend"
         ? "friend"
-        : row.series === "aikatsu"
-          ? "aikatsu-save"
-          : "aipri-save";
+        : row.series === "primagi" ? "primagi-save" : "aipri-save";
     const family =
       row.series === "おねがい"
         ? "onegai"
@@ -466,15 +461,15 @@
       : family;
   }
   const tagLabels = {
-    aikatsu: "アイカツ",
     onegai: "おねがい",
     himitsu: "ひみつ",
     aipri: "アイプリ",
     "onegai-verse": "おねがいV",
     "himitsu-verse": "ひみつV",
+    "primagi-verse": "プリマジ",
     "aipri-verse": "アイプリV",
-    "aikatsu-save": "アイカツセーブ",
     "aipri-save": "アイプリセーブ",
+    "primagi-save": "プリマジセーブ",
     friend: "フレカ",
   };
   function renderManager() {
@@ -552,29 +547,59 @@
     );
   }
   async function reloadManager() {
-    const request = ++managerRequest;
-    if (!manager.open) return;
+    const user = uid(),
+      request = ++managerRequest;
+    if (!user || !manager.open) return;
     managerStatus.textContent = "読み込んでいます…";
     manager.querySelector("[data-delete-all]").disabled = true;
     try {
-      await load();
+      const local = storedRows();
+      let saves = [];
+      // セーブコードは既存のサーバー保存を維持する。QR本体はローカル保存。
+      try {
+        const r = await db().rpc("card_qr_registered_list", { p_offset: 0 });
+        if (!r.error && Array.isArray(r.data)) saves = r.data.filter(row => row.kind === "save");
+      } catch {}
       if (request !== managerRequest || !manager.open) return;
-      managedRows = storedRows().map((row) => ({
-        ...row,
-        name: row.name || row.target_id
-      }));
-      managerOwner = uid();
+      managerOwner = user;
+      managedRows = [...local, ...saves];
       renderManager();
       managerStatus.textContent = "";
     } catch (e) {
-      if (request === managerRequest) {
+      if (uid() === user && request === managerRequest) {
         managedRows = [];
         managerOwner = null;
         manager.querySelector("[data-entries]").replaceChildren();
-        managerStatus.textContent = "QR情報を読み込めませんでした。";
+        managerStatus.textContent = err(e);
       }
     }
   }
+  manager.querySelector("[data-export-local]").onclick = () => {
+    const blob = new Blob([JSON.stringify({format:"card-management-local-qr-v1",items:storedRows()}, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "card-management-qr-backup.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  manager.querySelector("[data-import-local]").onclick = () => manager.querySelector("[data-import-local-file]").click();
+  manager.querySelector("[data-import-local-file]").onchange = async (event) => {
+    const file = event.target.files?.[0]; event.target.value = "";
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const incoming = Array.isArray(parsed) ? parsed : parsed.items;
+      if (!Array.isArray(incoming)) throw Error("バックアップ形式を確認できません。");
+      const merged = new Map(storedRows().map(row => [row.kind + ":" + row.target_id, row]));
+      for (const row of incoming) {
+        if (row && typeof row.kind === "string" && typeof row.target_id === "string" && typeof row.payload === "string")
+          merged.set(row.kind + ":" + row.target_id, row);
+      }
+      persistRows([...merged.values()]);
+      await load(); await reloadManager();
+      managerStatus.textContent = "QR情報を復元しました。";
+    } catch (e) {
+      managerStatus.textContent = "バックアップを読み込めませんでした。ファイルを確認してください。";
+    }
+  };
   manager.addEventListener("close", () => {
     managerRequest++;
     managerFilter = "all";
@@ -587,7 +612,7 @@
     if (!user || user !== managerOwner || managing) return;
     if (
       !(await confirmRemoval(
-        "このブラウザに保存したQRコードをすべて削除します。この操作は取り消せません。",
+        "セーブコード・フレカを除く、すべての登録済みQRコードを削除します。絞り込みに関係なく削除します。所持記録・セーブコード・フレカは残ります。",
       )) ||
       uid() !== user
     )
@@ -601,7 +626,7 @@
       document.dispatchEvent(new Event("private-qr-changed"));
       await load();
       await reloadManager();
-      managerStatus.textContent = "このブラウザに保存したQRコードを削除しました。";
+      managerStatus.textContent = "この端末のQRコードを削除しました。";
     } catch (e) {
       if (uid() === user) managerStatus.textContent = err(e);
     } finally {
@@ -632,14 +657,19 @@
     const settings = document.getElementById("display-settings-dialog"),
       p = settings?.querySelector("[data-qr-remaining]");
     if (!p || !settings.open) return;
+    const user = uid(),
+      request = ++remainingRequest;
+    p.disabled = !user;
+    if (!user) {
+      p.textContent = "QRコード登録残高　ログインしてください";
+      return;
+    }
     const count = storedRows().length;
-    const n = (value) => Number(value).toLocaleString("ja-JP");
-    p.disabled = false;
     p.replaceChildren();
-    const primary = document.createElement("span"),
-      detail = document.createElement("small");
+    const primary = document.createElement("span");
+    const detail = document.createElement("small");
     primary.textContent = "QRコード登録残高　上限なし";
-    detail.textContent = "（" + n(count) + "件登録中）";
+    detail.textContent = "（このブラウザに " + count.toLocaleString("ja-JP") + "件保存中）";
     p.append(primary, detail);
   }
   new MutationObserver((records) => {

@@ -4,8 +4,8 @@
     db = () => host()?.client(),
     uid = () => host()?.session()?.user?.id;
   const series = {
-    aikatsu: "アイカツ！アンコール",
     aipri: "アイプリ",
+    primagi: "プリマジ",
     friend: "フレカ",
   };
   const button = document.createElement("button");
@@ -28,14 +28,14 @@
   list.innerHTML =
     '<div class="save-codes-heading"><h2 id="save-codes-title">セーブ・フレカ</h2><button type="button" data-close aria-label="閉じる">×</button></div><div class="save-codes-toolbar"><p>セーブコード・フレンドカードを管理</p><button type="button" class="primary" data-new>新規登録</button></div><p data-status role="status" aria-live="polite"></p><div data-list></div>';
   document.body.append(list);
-  let selectedType = "aikatsu";
+  let selectedType = "aipri";
   const tabs = document.createElement("div");
   tabs.className = "save-type-tabs";
   tabs.setAttribute("role", "group");
   tabs.setAttribute("aria-label", "種別で絞り込み");
   for (const [value, label] of [
-    ["aikatsu", "アイカツ"],
     ["aipri", "アイプリ"],
+    ["primagi", "プリマジ"],
     ["friend", "フレカ"],
   ]) {
     const tab = document.createElement("button");
@@ -54,7 +54,7 @@
   formDialog.className = "save-codes-dialog save-codes-editor";
   formDialog.setAttribute("aria-labelledby", "save-code-add-title");
   formDialog.innerHTML =
-    '<div class="save-codes-heading"><h2 id="save-code-add-title">セーブ・フレカを登録</h2><button type="button" data-close aria-label="閉じる">×</button></div><form><label>種別<select name="series"><option value="aikatsu">アイカツ！アンコール</option><option value="aipri">アイプリ</option><option value="friend">フレンドカード</option></select></label><label>マイキャラネーム<input name="character_name" maxlength="40" required autocomplete="off"></label><label data-manual hidden>ID（任意）<input name="display_id" maxlength="200" autocomplete="off" placeholder="わかる場合だけ入力"></label><label data-birthday hidden>マイキャラの誕生日（任意）<span class="save-birthday-fields"><select name="birth_month" aria-label="誕生月"><option value="">月</option></select><select name="birth_day" aria-label="誕生日の日"><option value="">日</option></select></span></label><label data-memo hidden>メモ（任意）<textarea name="memo" maxlength="1000" rows="3" placeholder="自由にメモを入力できます"></textarea></label><p data-help>アイカツはQRコードの読み取り結果をIDとして表示します。</p><section class="save-qr-consent" aria-label="QR登録規約への同意"><button type="button" class="save-qr-terms-link" data-qr-terms-open aria-haspopup="dialog" aria-controls="save-qr-terms-dialog">QRコード登録規約</button><label class="save-qr-consent-check"><input type="checkbox" name="qr_terms_consent" required><span>QRコード登録規約に同意する</span></label></section><p role="status" data-status aria-live="polite"></p><button type="submit" class="primary" disabled>QRコードを読み取る</button></form>';
+    '<div class="save-codes-heading"><h2 id="save-code-add-title">セーブ・フレカを登録</h2><button type="button" data-close aria-label="閉じる">×</button></div><form><label>種別<select name="series"><option value="aipri">アイプリ</option><option value="primagi">ワッチャプリマジ！</option><option value="friend">フレンドカード</option></select></label><label>マイキャラネーム<input name="character_name" maxlength="40" required autocomplete="off"></label><label data-manual hidden>ID（任意）<input name="display_id" maxlength="200" autocomplete="off" placeholder="わかる場合だけ入力"></label><label data-birthday hidden>マイキャラの誕生日（任意）<span class="save-birthday-fields"><select name="birth_month" aria-label="誕生月"><option value="">月</option></select><select name="birth_day" aria-label="誕生日の日"><option value="">日</option></select></span></label><label data-memo hidden>メモ（任意）<textarea name="memo" maxlength="1000" rows="3" placeholder="自由にメモを入力できます"></textarea></label><p data-help>プリマジはQRコードの読み取り結果をIDとして表示します。</p><section class="save-qr-consent" aria-label="QR登録規約への同意"><button type="button" class="save-qr-terms-link" data-qr-terms-open aria-haspopup="dialog" aria-controls="save-qr-terms-dialog">QRコード登録規約</button><label class="save-qr-consent-check"><input type="checkbox" name="qr_terms_consent" required><span>QRコード登録規約に同意する</span></label></section><p role="status" data-status aria-live="polite"></p><button type="submit" class="primary" disabled>QRコードを読み取る</button></form>';
   document.body.append(formDialog);
   const termsDialog = document.createElement("dialog");
   termsDialog.id = "save-qr-terms-dialog";
@@ -175,18 +175,16 @@
     });
   }
   function normalizedType(value) {
-    return value === "friend"
+    return value === "primagi" ? "primagi" : value === "friend"
       ? "friend"
-      : value === "aikatsu"
-        ? "aikatsu"
-        : "aipri";
+      : "aipri";
   }
   function render() {
     const root = list.querySelector("[data-list]");
     root.replaceChildren();
     tabs.style.setProperty(
       "--save-type-index",
-      ["aikatsu", "aipri", "friend"].indexOf(selectedType),
+      ["aipri", "primagi", "friend"].indexOf(selectedType),
     );
     for (const tab of tabs.children)
       tab.setAttribute(
@@ -221,9 +219,7 @@
         tag.textContent =
           key === "friend"
             ? "フレカ"
-            : key === "aikatsu"
-              ? "アイカツ"
-              : "アイプリ";
+            : key === "primagi" ? "プリマジ" : "アイプリ";
         const name = document.createElement("strong");
         name.textContent = row.character_name;
         const qr = document.createElement("button");
@@ -254,7 +250,7 @@
           }
         };
         top.append(tag, name, qr, del);
-        const id = key === "aikatsu" ? row.payload : row.display_id;
+        const id = key === "primagi" ? row.payload : row.display_id;
         const idButton = document.createElement("button");
         idButton.type = "button";
         idButton.className = "save-code-id";
@@ -315,8 +311,8 @@
     form.querySelector("[data-help]").textContent =
       type === "friend"
         ? "フレンドカードのQRコードを読み取って登録します。"
-        : type === "aikatsu"
-          ? "アイカツはQRコードの読み取り結果をIDとして表示します。"
+        : type === "primagi"
+          ? "プリマジはQRコードの読み取り結果をそのまま表示します。"
           : "アイプリのIDは任意です。QRの読み取り結果からIDを推測・変換しません。";
   };
   f.qr_terms_consent.onchange = () => {
