@@ -23,6 +23,33 @@
     // QRコードはアカウントではなく、このブラウザのローカルストレージに保存する。
     uid = () => "local-device";
   const STORAGE_KEY = "card-management-local-qr-v1";
+  // プリマジの座標・パーツQRはテキストではなくバイナリとして保存する。
+  const primagiBytesPrefix = "__CARD_PRIMAGI_QR_BYTES_V1__:";
+  function encodePrimagiScan(result) {
+    const bytes = result?.binaryData;
+    if (!bytes?.length) return null;
+    if (bytes.length > 1500 || !Array.from(bytes).every((b) => Number.isInteger(b) && b >= 0 && b <= 255))
+      throw Error("このQRコードは保存できません");
+    const payload = primagiBytesPrefix + btoa(String.fromCharCode(...bytes));
+    if (payload.length > 2048) throw Error("このQRコードは保存できません");
+    return payload;
+  }
+  function createStoredQr(payload, allowBinary = false) {
+    const q = qrcode(0, "M");
+    if (allowBinary && payload.startsWith(primagiBytesPrefix)) {
+      const encoded = payload.slice(primagiBytesPrefix.length);
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded) || encoded.length % 4 !== 0)
+        throw Error("QR情報を確認できません");
+      const raw = atob(encoded);
+      if (btoa(raw) !== encoded || !raw.length || raw.length > 1500)
+        throw Error("QR情報を確認できません");
+      q.addData(Array.from(raw, (c) => c.charCodeAt(0)), "ByteRaw");
+    } else {
+      q.addData(payload, "Byte");
+    }
+    q.make();
+    return q;
+  }
   function storedRows() {
     try {
       const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -116,8 +143,8 @@
     })().finally(() => (loading = null));
     return loading;
   }
-  function button(kind, id, name, group = []) {
-    const t = { kind, id: String(id), name, group };
+  function button(kind, id, name, group = [], family = "") {
+    const t = { kind, id: String(id), name, group, family };
     const b = document.createElement("button");
     b.type = "button";
     b.className = "private-qr-button";
@@ -161,9 +188,7 @@
       '<div data-code></div><p data-name></p><div class="qr-navigation"><button data-prev aria-label="前のQR">‹</button><span data-position></span><button data-next aria-label="次のQR">›</button></div><button data-delete>QRコードを削除</button><p role="status"></p>';
     const code = content.querySelector("[data-code]");
     try {
-      const q = qrcode(0, "M");
-      q.addData(payload, "Byte");
-      q.make();
+      const q = createStoredQr(payload, t.family === "primagi");
       code.innerHTML = q.createSvgTag({
         cellSize: 6,
         margin: 24,
@@ -258,7 +283,9 @@
           result = jsQR(pixels.data, canvas.width, canvas.height, {
             inversionAttempts: "attemptBoth",
           });
-        if (result?.data) {
+        const binaryScan = !onRead && t?.family === "primagi" &&
+          (t.kind === "coordinate" || t.kind === "part");
+        if (binaryScan ? result?.binaryData?.length : result?.data) {
           captureFooter.replaceChildren();
           stop();
           message("QRコードを保存しています…");
@@ -270,8 +297,10 @@
               return;
             }
             if (uid() !== u) return;
-            saveLocal(t, result.data);
-            rows.set(key(t), result.data);
+            const payload = binaryScan ? encodePrimagiScan(result) : result.data;
+            if (!payload) throw Error("このQRコードは保存できません");
+            saveLocal(t, payload);
+            rows.set(key(t), payload);
             sync();
             document.dispatchEvent(new Event("private-qr-changed"));
             show(t);

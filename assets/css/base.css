@@ -1,8 +1,8 @@
+/* ===== assets/css/base.css ===== */
 /* style.css */
 @import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap");
 :root {
-  font-family:
-    "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
   color: #403249;
   background: #fff8fc;
   --accent: #d63e84;
@@ -979,13 +979,7 @@ nav {
   overflow: hidden;
   margin: 30px 0 10px;
   padding: 15px 0;
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    #000 8%,
-    #000 92%,
-    transparent
-  );
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 .marquee-track {
   display: flex;
@@ -1185,16 +1179,14 @@ nav {
   }
 }
 body {
-  background:
-    radial-gradient(circle at 8% 12%, #fff0f7 0, transparent 32%), #fffafc;
+  background: radial-gradient(circle at 8% 12%, #fff0f7 0, transparent 32%), #fffafc;
 }
 .game-aipri {
   --accent: #247ca4;
   --soft: #e4f7ff;
   --line: #cde8f2;
   --muted: #627c8a;
-  background:
-    radial-gradient(circle at 90% 8%, #def6ff 0, transparent 36%), #f6fcff;
+  background: radial-gradient(circle at 90% 8%, #def6ff 0, transparent 36%), #f6fcff;
 }
 .game-aipri .progress-track span {
   background: #51b6da;
@@ -2427,8 +2419,7 @@ input[aria-invalid="true"] {
   box-shadow: none;
   text-decoration: none;
 }
-#nav
-  > :is(#probability-back, #probability-open, #edit-nickname, #logout):hover {
+#nav > :is(#probability-back, #probability-open, #edit-nickname, #logout):hover {
   background: var(--soft);
   color: var(--accent);
 }
@@ -3728,13 +3719,8 @@ html:has(dialog:modal) {
     scrollbar-color: var(--scroll-thumb, #d7b8c8) transparent !important;
     scrollbar-gutter: auto !important;
   }
-  :is(
-      dialog,
-      [role="dialog"],
-      [role="alertdialog"]
-    ).external-modal-scroll::-webkit-scrollbar,
-  :is(dialog, [role="dialog"], [role="alertdialog"])
-    .external-modal-scroll::-webkit-scrollbar {
+  :is(dialog, [role="dialog"], [role="alertdialog"]).external-modal-scroll::-webkit-scrollbar,
+  :is(dialog, [role="dialog"], [role="alertdialog"]) .external-modal-scroll::-webkit-scrollbar {
     display: block !important;
     width: 9px !important;
     height: 9px !important;
@@ -3829,4 +3815,455 @@ html.album-modal-open #detail > .modal-body {
   overflow-y: auto !important;
   overflow-x: hidden;
   overscroll-behavior: contain;
+}
+
+/* ===== assets/css/registration-notice.css ===== */
+/* 招待制の新規登録案内。受付状態・ID発行の制御は既存の処理を使う。 */
+.registration-invitation[hidden] {
+  display: none !important;
+}
+#signup-flow.registration-paused > .signup-steps,
+#signup-flow.registration-paused #signup-id-step > h3 {
+  display: none;
+}
+#signup-flow.invitation-only #signup-id-step {
+  gap: 0;
+}
+#signup-flow .registration-invitation {
+  padding: 4px 0 0;
+  text-align: left;
+  min-width: 0;
+}
+.registration-invitation-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: var(--soft, #ffedf5);
+  color: var(--accent, #d63e84);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+#signup-flow .registration-invitation h3 {
+  margin: 0 0 12px;
+  padding: 0;
+  background: transparent;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.6;
+  letter-spacing: 0.015em;
+  color: inherit;
+}
+#signup-flow .registration-invitation p {
+  padding: 0;
+  background: transparent;
+  overflow-wrap: anywhere;
+}
+#signup-flow .registration-invitation-intro {
+  margin: 0;
+  color: var(--muted, #77697b);
+  font-size: 13px;
+  line-height: 1.9;
+}
+#signup-flow .registration-invitation-steps {
+  list-style: none;
+  margin: 22px 0;
+  padding: 18px 0;
+  border-block: 1px solid var(--line, #efdce7);
+  display: grid;
+  gap: 15px;
+}
+.registration-invitation-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.8;
+}
+.registration-invitation-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 23px;
+  min-height: 23px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--soft, #ffedf5);
+  color: var(--accent, #d63e84);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.registration-x-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid #26232b;
+  border-radius: 12px;
+  background: #26232b;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+  transition: background 0.15s;
+}
+.registration-x-link:hover {
+  background: #3b3541;
+}
+.registration-x-link:focus-visible {
+  outline: 3px solid var(--accent, #d63e84);
+  outline-offset: 3px;
+}
+.registration-x-link > svg {
+  flex-shrink: 0;
+}
+#signup-flow .registration-x-link small {
+  display: block;
+  margin: 0;
+  color: #d8d3dc;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.registration-x-arrow {
+  margin-left: auto;
+  flex: 0 0 18px;
+}
+#signup-flow .registration-invitation-note {
+  margin: 16px 0 0;
+  color: var(--muted, #77697b);
+  font-size: 11px;
+  line-height: 1.8;
+}
+@media (max-width: 480px) {
+  #signup-flow .registration-invitation h3 {
+    font-size: 20px;
+  }
+  #signup-flow .registration-invitation-steps {
+    margin: 18px 0;
+    padding: 16px 0;
+    gap: 13px;
+  }
+  .registration-x-link {
+    min-height: 60px;
+    padding: 12px 14px;
+  }
+}
+/* 招待URLからは通常ログインと分けた単独の登録ページを初期表示する。 */
+body.invitation-route .auth > .intro,
+body.invitation-route #auth-form,
+body.invitation-route #auth-normal-panel > .tabs,
+body.invitation-route #guest-browse-link {
+  display: none !important;
+}
+body.invitation-route .auth {
+  display: block !important;
+  width: 100%;
+  max-width: 540px;
+  min-height: 0 !important;
+  margin: 0 auto;
+  padding: 32px 18px 48px;
+  align-self: auto;
+}
+body.invitation-route .auth-panel {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  justify-self: auto;
+}
+body.invitation-route #auth-normal-panel > h2 {
+  margin: 0 0 22px;
+  font-size: 22px;
+  line-height: 1.6;
+}
+body.invitation-route #invitation-notice {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0 0 20px;
+  text-align: left;
+}
+body.invitation-route #signup-registration-status {
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  body.invitation-route .auth {
+    padding: 24px 14px 36px;
+  }
+  body.invitation-route #auth-normal-panel > h2 {
+    font-size: 20px;
+  }
+}
+
+/* Login slideshow: show the card image without a white surrounding tile. */
+#auth-art .marquee-card,
+#auth-art .marquee-image-frame,
+#auth-art .marquee-card img,
+#auth-art .marquee-card canvas {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+#auth-art .marquee-card { padding: 0 !important; }
+
+/* Shared feedback: calm colors, readable copy and a stable mobile layout. */
+.card-feedback {
+  --feedback-ink: #824558;
+  --feedback-line: #edced9;
+  --feedback-fill: #fff5f8;
+  position: relative;
+  box-sizing: border-box;
+  padding: 13px 15px 13px 43px;
+  margin-block: 14px;
+  border: 1px solid var(--feedback-line);
+  border-radius: 15px;
+  background: var(--feedback-fill);
+  color: var(--feedback-ink) !important;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.75;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.card-feedback::before {
+  content: "!";
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+:is(.card-feedback, #toast.card-notice)[data-feedback-kind="network"],
+:is(.card-feedback, #toast.card-notice)[data-feedback-kind="offline"],
+:is(.card-feedback, #toast.card-notice)[data-feedback-kind="server"] {
+  --feedback-ink: #315f7c;
+  --feedback-line: #caddE9;
+  --feedback-fill: #f3f9fd;
+}
+:is(.card-feedback, #toast.card-notice)[data-feedback-kind="timeout"],
+:is(.card-feedback, #toast.card-notice)[data-feedback-kind="busy"] {
+  --feedback-ink: #795823;
+  --feedback-line: #eadbb9;
+  --feedback-fill: #fffbf1;
+}
+#toast.card-notice {
+  --feedback-ink: #824558;
+  --feedback-line: #edced9;
+  --feedback-fill: #fff8fa;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: 11px;
+  width: min(450px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 16px 13px 16px 16px;
+  border: 1px solid var(--feedback-line);
+  border-radius: 20px;
+  background: var(--feedback-fill);
+  color: var(--feedback-ink) !important;
+  box-shadow: 0 12px 42px #3d294b1c;
+  font-size: 13px;
+  text-align: left;
+  pointer-events: auto;
+  animation: card-notice-enter 180ms ease-out;
+}
+#toast.card-notice[hidden] {
+  display: none !important;
+}
+#toast.card-notice[data-feedback-kind="success"] {
+  --feedback-ink: #3c6857;
+  --feedback-line: #d0e4d9;
+  --feedback-fill: #f6fcf8;
+  align-items: center;
+}
+.card-notice-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--feedback-line);
+  border-radius: 12px;
+  background: #ffffffb3;
+}
+.card-notice-icon svg {
+  width: 21px;
+  height: 21px;
+}
+.card-notice-copy {
+  min-width: 0;
+  padding-top: 2px;
+  overflow-wrap: anywhere;
+}
+.card-notice-copy strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.65;
+}
+.card-notice-copy span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+#toast .card-notice-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+#toast .card-notice-close:hover {
+  background: #ffffffc9;
+}
+#toast .card-notice-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+@keyframes card-notice-enter {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@media (max-width: 480px) {
+  #toast.card-notice {
+    gap: 9px;
+    padding: 14px 10px 14px 13px;
+    border-radius: 18px;
+    grid-template-columns: 34px minmax(0, 1fr) 44px;
+  }
+  #toast .card-notice-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #toast.card-notice { animation: none; }
+}
+
+/* Rounded substitutes for unregistered coordinate artwork. */
+.coordinate-image-placeholder { --coordinate-icon-ink:#799bae; --coordinate-icon-fill:#dfeef5; display:grid; place-items:center; width:100%; height:100%; min-height:64px; aspect-ratio:1; padding:10%; border-radius:24px; background:linear-gradient(145deg,#f9fcfd,#eff6fa); color:var(--coordinate-icon-ink); overflow:hidden; }
+.coordinate-image-placeholder > svg { display:block; width:100%; height:100%; max-width:156px; max-height:176px; fill:var(--coordinate-icon-fill); stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.coordinate-image-placeholder .coordinate-icon-halo { fill:#fff; fill-opacity:.75; stroke:none; }
+.coordinate-image-placeholder .coordinate-icon-detail { fill:#fff; fill-opacity:.9; }
+.coordinate-image-placeholder .coordinate-icon-sparkle { fill:none; opacity:.55; }
+body.game-primagi .coordinate-image-placeholder, .qr-information-dialog[data-theme="primagi"] .coordinate-image-placeholder { --coordinate-icon-ink:#a99561; --coordinate-icon-fill:#f6eaca; background:linear-gradient(145deg,#fffef9,#faf5e8); }
+.verse-full-image > .coordinate-image-placeholder { aspect-ratio:3 / 4; }
+.verse-part-image-frame > .coordinate-image-placeholder { position:absolute; inset:0; min-height:0; border-radius:18px; }
+.qr-information-image > .coordinate-image-placeholder { min-height:120px; }
+.public-part-list .coordinate-image-placeholder { min-height:70px; }
+
+#guest-browse-link[hidden] { display:none !important; }
+.guest-browse-stopped { min-height:100svh;display:grid;place-items:center;padding:28px 20px;background:#faf7fc;color:#51485e; }
+.guest-browse-stopped section { width:min(100%,520px);padding:38px 28px;text-align:center;background:#fff;border-radius:28px;box-shadow:0 12px 42px #66507810; }
+.guest-browse-stopped svg { width:76px;height:76px;fill:#f4eefa;stroke:#987ab0;stroke-width:2.3;stroke-linecap:round; }
+.guest-browse-stopped svg path { fill:none; }
+.guest-browse-stopped h1 { font-size:clamp(19px,4.5vw,24px);line-height:1.5;margin:20px 0 14px; }
+.guest-browse-stopped p { font-size:14px;line-height:1.9;margin:0;color:#7b7183; }
+.guest-browse-stopped section > div { display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:26px; }
+.guest-browse-stopped button,.guest-browse-stopped a { border:1px solid #e7ddec;border-radius:999px;padding:11px 20px;font:inherit;font-size:14px;text-decoration:none;background:#fff;color:#79608d;cursor:pointer; }
+.guest-browse-stopped button { background:#8c6ba6;color:#fff;border-color:#8c6ba6; }
+
+/* スマホの詳細モーダル：縦スクロールとピンチは維持。 */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  html #detail > .detail-navigation,
+  html #all-detail > .detail-navigation {
+    display: none !important;
+  }
+  #detail .viewer,
+  #all-detail .viewer,
+  #verse-detail .verse-modal-full,
+  #public-detail .public-modal-image {
+    touch-action: pan-y pinch-zoom;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #auth-art {
+    touch-action: pan-y pinch-zoom;
+  }
+}
+#auth-art.is-dragging .marquee-track {
+  animation-play-state: paused;
+}
+#auth-art .marquee-card img {
+  -webkit-user-drag: none;
+}
+
+/* Pre-issue instructions, kept hidden until the server confirms the state. */
+#signup-issue-notice[hidden], #signup-issue-recheck[hidden] { display: none !important; }
+#signup-issue-notice {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: .7rem .85rem;
+  border-radius: .7rem;
+  border: 1px solid var(--line, #e8dbe2);
+  background: var(--soft, #faf5f7);
+  text-align: left;
+  font-size: .8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#signup-issue-notice h4 {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0 0 .3rem;
+  font-size: .86rem;
+}
+#signup-issue-notice svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#signup-issue-notice ul { margin: 0; padding-inline-start: 1.2em; }
+#signup-issue-notice li + li { margin-top: .2em; }
+#issue-album-id[aria-busy="true"]::before {
+  content: "";
+  display: inline-block;
+  width: .8em;
+  height: .8em;
+  margin-inline-end: .45em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  vertical-align: -.1em;
+  animation: signup-issue-spin .75s linear infinite;
+}
+@keyframes signup-issue-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  #issue-album-id[aria-busy="true"]::before { animation: none; }
 }

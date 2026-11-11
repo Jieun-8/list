@@ -2909,3 +2909,29 @@ dialog *,
   background: #ccebd7;
   color: #367c52;
 }
+
+/* Static historical catalogs in the guest card search. */
+#public-scopes .public-all-systems {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  flex: 0 0 100%;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid #efdce5;
+}
+#public-scopes .public-all-systems button {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#public-scopes .public-all-systems [aria-pressed="true"] {
+  color: #a64270;
+  border-color: #e8a9c6;
+  background: #fff0f7;
+}
+@media (max-width: 760px) {
+  #public-scopes .public-all-systems {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
